@@ -4,4 +4,14 @@
 
 <web-app>
   <display-name>Archetype Created Web Application</display-name>
+    
+    <servlet>
+        <servlet-name>forecast</servlet-name>
+        <servlet-class>com.malex.aladdin.service.servlet.ForecastServlet</servlet-class>
+    </servlet>
+    
+    <servlet-mapping>
+        <servlet-name>forecast</servlet-name>
+        <url-pattern>/forecast</url-pattern>
+    </servlet-mapping>
 </web-app>
