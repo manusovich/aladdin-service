@@ -41,7 +41,13 @@ public class ForecastServlet extends HttpServlet {
                 JSONArray hourly = (JSONArray) ((JSONObject) jsonObject.get("hourly")).get("data");
                 for (int i = 0; i < 12; i++) {
                     JSONObject hour = (JSONObject) hourly.get(i);
-                    int temp = (int) ((Double) hour.get("temperature") * 100);
+                    Object temperature = hour.get("temperature");
+                    int temp = 0;
+                    if (temperature instanceof Long) {
+                        temp = (int) ((Long) temperature * 100);
+                    } else {
+                        temp = (int) ((Double) temperature * 100);
+                    }
                     byte[] bytes = ByteBuffer.allocate(4).putInt(temp).array();
                     response.getOutputStream().write(bytes);
                     System.out.println(temp);
