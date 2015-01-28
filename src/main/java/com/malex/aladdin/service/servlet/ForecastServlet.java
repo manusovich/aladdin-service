@@ -39,7 +39,7 @@ public class ForecastServlet extends HttpServlet {
             try {
                 JSONObject jsonObject = (JSONObject) jsonParser.parse(br);
                 JSONArray hourly = (JSONArray) ((JSONObject) jsonObject.get("hourly")).get("data");
-                for (int i = 0; i < 12; i++) {
+                for (int i = 1; i < 13; i++) {
                     JSONObject hour = (JSONObject) hourly.get(i);
                     Object temperature = hour.get("temperature");
                     int temp = 0;
