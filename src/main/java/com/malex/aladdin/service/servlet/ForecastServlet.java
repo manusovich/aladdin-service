@@ -34,7 +34,10 @@ public class ForecastServlet extends HttpServlet {
         response.setHeader("Content-Length", "" + 3 * 4 * 12);
 
         try {
-            url = new URL("https://api.forecast.io/forecast/a1b3feeab00e064da02d075a4d29e82f/30.267153,-97.743061");
+            // austin
+            //url = new URL("https://api.forecast.io/forecast/a1b3feeab00e064da02d075a4d29e82f/30.267153,-97.743061");
+            // jakarta
+            url = new URL("https://api.forecast.io/forecast/a1b3feeab00e064da02d075a4d29e82f/-6.208763,106.845599");
 
             is = url.openStream();
             br = new BufferedReader(new InputStreamReader(is));
