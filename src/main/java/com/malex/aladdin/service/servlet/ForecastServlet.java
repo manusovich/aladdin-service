@@ -10,9 +10,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
 
@@ -20,58 +21,72 @@ import java.nio.ByteBuffer;
  * Created by Alex Manusovich on 1/21/15.
  */
 public class ForecastServlet extends HttpServlet {
+    private static final String API_KEY = System.getenv("AL_API_KEY");
+    private static final String LAT = System.getenv("AL_LAT");
+    private static final String LON = System.getenv("AL_LON");
+    private static final int REQUEST_PERIOD = 5 * 60 * 1000;
+    private static final int START_HOUR = 1;
+    private static final int END_HOUR = 13;
+    private static final int DATA_SIZE = 3 * 4 * (END_HOUR - START_HOUR);
 
-    public static final int START_HOUR = 1;
-    public static final int END_HOUR = 13;
+    private final String mutex = "";
+    private final ByteArrayOutputStream data = new ByteArrayOutputStream(DATA_SIZE);
+    private long lastRequestTime;
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse response) throws ServletException, IOException {
-        URL url;
-        InputStream is = null;
-        BufferedReader br;
+        synchronized (mutex) {
 
-        response.setHeader("Content-Type", "application/octet-stream");
-        response.setHeader("Content-Length", "" + 3 * 4 * 12);
+            if ((System.currentTimeMillis() - lastRequestTime) > REQUEST_PERIOD) {
+                try {
+                    updateForecast();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
 
+            response.setHeader("Content-Type", "application/octet-stream");
+            response.setHeader("Content-Length", "" + data.size());
+            response.getOutputStream().write(data.toByteArray());
+            response.getOutputStream().flush();
+            response.getOutputStream().close();
+            lastRequestTime = System.currentTimeMillis();
+        }
+    }
+
+    private void updateForecast() throws IOException {
+        BufferedReader reader = null;
         try {
-            // austin
-            url = new URL("https://api.forecast.io/forecast/a1b3feeab00e064da02d075a4d29e82f/30.267153,-97.743061");
-            // jakarta
-            //url = new URL("https://api.forecast.io/forecast/a1b3feeab00e064da02d075a4d29e82f/-6.208763,106.845599");
-
-            is = url.openStream();
-            br = new BufferedReader(new InputStreamReader(is));
+            String urlTemplate = "https://api.forecast.io/forecast/%s/%s,%s";
+            URL url = new URL(String.format(urlTemplate, API_KEY, LAT, LON));
+            InputStreamReader streamReader = new InputStreamReader(url.openStream());
+            reader = new BufferedReader(streamReader);
 
             JSONParser jsonParser = new JSONParser();
             try {
-                JSONObject jsonObject = (JSONObject) jsonParser.parse(br);
+                JSONObject jsonObject = (JSONObject) jsonParser.parse(reader);
                 JSONArray hourly = (JSONArray) ((JSONObject) jsonObject.get("hourly")).get("data");
 
                 for (int i = START_HOUR; i < END_HOUR; i++) {
                     JSONObject hour = (JSONObject) hourly.get(i);
-                    writeParameter(response, hour, "apparentTemperature", 100);
-                    writeParameter(response, hour, "windSpeed", 100);
-                    writeParameter(response, hour, "precipIntensity", 1000);
+                    writeParameter(data, hour, "apparentTemperature", 100);
+                    writeParameter(data, hour, "windSpeed", 100);
+                    writeParameter(data, hour, "precipIntensity", 1000);
                 }
 
-                response.getOutputStream().flush();
-                response.getOutputStream().close();
             } catch (ParseException e) {
                 e.printStackTrace();
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
         } finally {
             try {
-                if (is != null) is.close();
+                if (reader != null) reader.close();
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }
         }
     }
 
-    private void writeParameter(final HttpServletResponse response,
+    private void writeParameter(final OutputStream target,
                                 final JSONObject hour,
                                 final String dataKey,
                                 final int q) throws IOException {
@@ -85,6 +100,6 @@ public class ForecastServlet extends HttpServlet {
         }
 
         byte[] bytes = ByteBuffer.allocate(4).putInt(temp).array();
-        response.getOutputStream().write(bytes);
+        target.write(bytes);
     }
 }
