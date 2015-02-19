@@ -1,4 +1,4 @@
-// https://api.forecast.io/forecast/a1b3feeab00e064da02d075a4d29e82f/30.267153,-97.743061
+// https://api.forecast.io/forecast/<KEY>/<LAT>,<LON>
 
 
 {
