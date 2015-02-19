@@ -22,8 +22,6 @@ import java.nio.ByteBuffer;
  */
 public class ForecastServlet extends HttpServlet {
     private static final String API_KEY = System.getenv("AL_API_KEY");
-    private static final String LAT = System.getenv("AL_LAT");
-    private static final String LON = System.getenv("AL_LON");
     private static final int REQUEST_PERIOD = 5 * 60 * 1000;
     private static final int START_HOUR = 1;
     private static final int END_HOUR = 13;
@@ -58,7 +56,7 @@ public class ForecastServlet extends HttpServlet {
         BufferedReader reader = null;
         try {
             String urlTemplate = "https://api.forecast.io/forecast/%s/%s,%s";
-            URL url = new URL(String.format(urlTemplate, API_KEY, LAT, LON));
+            URL url = new URL(String.format(urlTemplate, API_KEY, System.getenv("AL_LAT"), System.getenv("AL_LON")));
             InputStreamReader streamReader = new InputStreamReader(url.openStream());
             reader = new BufferedReader(streamReader);
 
