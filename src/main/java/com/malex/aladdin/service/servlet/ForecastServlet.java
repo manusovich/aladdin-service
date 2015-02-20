@@ -25,6 +25,9 @@ public class ForecastServlet extends HttpServlet {
     private static final int START_HOUR = 1;
     private static final int END_HOUR = 13;
     private static final int DATA_SIZE = 3 * 4 * (END_HOUR - START_HOUR);
+    private static final int TEMP_MULTIPLY = 100;
+    private static final int WIND_MULTIPLY = 100;
+    private static final int PRECIP_MULTIPLY = 1000;
 
     private final String mutex = "";
     private final ByteArrayOutputStream data = new ByteArrayOutputStream(DATA_SIZE);
@@ -52,8 +55,8 @@ public class ForecastServlet extends HttpServlet {
     }
 
     private void updateForecast() throws IOException {
-        int maxTemp = Integer.valueOf(System.getenv("AL_MAX_TEMP_FAHRENHEIT"));
-        int minTemp = Integer.valueOf(System.getenv("AL_MIN_TEMP_FAHRENHEIT"));
+        int maxTemp = Integer.valueOf(System.getenv("AL_MAX_TEMP_FAHRENHEIT")) * TEMP_MULTIPLY;
+        int minTemp = Integer.valueOf(System.getenv("AL_MIN_TEMP_FAHRENHEIT")) * TEMP_MULTIPLY;
 
         BufferedReader reader = null;
         try {
@@ -70,7 +73,7 @@ public class ForecastServlet extends HttpServlet {
                 for (int i = START_HOUR; i < END_HOUR; i++) {
                     JSONObject hour = (JSONObject) hourly.get(i);
 
-                    int temperature = safeIntFromJson(hour, "apparentTemperature", 100);
+                    int temperature = safeIntFromJson(hour, "apparentTemperature", TEMP_MULTIPLY);
 
                     if (temperature > maxTemp) {
                         temperature = maxTemp;
@@ -78,12 +81,12 @@ public class ForecastServlet extends HttpServlet {
                         temperature = minTemp;
                     } else {
                         float tempCoeff = (float) 100 / (maxTemp - minTemp);
-                        temperature = (int) (tempCoeff * 100);
+                        temperature = (int) (tempCoeff * TEMP_MULTIPLY);
                     }
 
-                    int wind = safeIntFromJson(hour, "windSpeed", 100);
-                    int precip = safeIntFromJson(hour, "precipIntensity", 1000);
-                   
+                    int wind = safeIntFromJson(hour, "windSpeed", WIND_MULTIPLY);
+                    int precip = safeIntFromJson(hour, "precipIntensity", PRECIP_MULTIPLY);
+
                     data.write(intToBytes(temperature));
                     data.write(intToBytes(wind));
                     data.write(intToBytes(precip));
