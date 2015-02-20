@@ -13,7 +13,6 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
 
@@ -53,6 +52,9 @@ public class ForecastServlet extends HttpServlet {
     }
 
     private void updateForecast() throws IOException {
+        int maxTemp = Integer.valueOf(System.getenv("AL_MAX_TEMP_FAHRENHEIT"));
+        int minTemp = Integer.valueOf(System.getenv("AL_MIN_TEMP_FAHRENHEIT"));
+
         BufferedReader reader = null;
         try {
             String urlTemplate = "https://api.forecast.io/forecast/%s/%s,%s";
@@ -67,9 +69,24 @@ public class ForecastServlet extends HttpServlet {
 
                 for (int i = START_HOUR; i < END_HOUR; i++) {
                     JSONObject hour = (JSONObject) hourly.get(i);
-                    writeParameter(data, hour, "apparentTemperature", 100);
-                    writeParameter(data, hour, "windSpeed", 100);
-                    writeParameter(data, hour, "precipIntensity", 1000);
+
+                    int temperature = safeIntFromJson(hour, "apparentTemperature", 100);
+
+                    if (temperature > maxTemp) {
+                        temperature = maxTemp;
+                    } else if (temperature < minTemp) {
+                        temperature = minTemp;
+                    } else {
+                        float tempCoeff = (float) 100 / (maxTemp - minTemp);
+                        temperature = (int) (tempCoeff * 100);
+                    }
+
+                    int wind = safeIntFromJson(hour, "windSpeed", 100);
+                    int precip = safeIntFromJson(hour, "precipIntensity", 1000);
+                   
+                    data.write(intToBytes(temperature));
+                    data.write(intToBytes(wind));
+                    data.write(intToBytes(precip));
                 }
 
             } catch (ParseException e) {
@@ -84,20 +101,18 @@ public class ForecastServlet extends HttpServlet {
         }
     }
 
-    private void writeParameter(final OutputStream target,
-                                final JSONObject hour,
+    private byte[] intToBytes(int value) {
+        return ByteBuffer.allocate(4).putInt(value).array();
+    }
+
+    private int safeIntFromJson(final JSONObject data,
                                 final String dataKey,
-                                final int q) throws IOException {
-        int temp;
-
-        Object temperature = hour.get(dataKey);
-        if (temperature instanceof Long) {
-            temp = (int) ((Long) temperature * q);
+                                final int multiply) throws IOException {
+        Object jsonAttrValue = data.get(dataKey);
+        if (jsonAttrValue instanceof Long) {
+            return (int) ((Long) jsonAttrValue * multiply);
         } else {
-            temp = (int) ((Double) temperature * q);
+            return (int) ((Double) jsonAttrValue * multiply);
         }
-
-        byte[] bytes = ByteBuffer.allocate(4).putInt(temp).array();
-        target.write(bytes);
     }
 }
