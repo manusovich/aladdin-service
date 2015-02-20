@@ -55,8 +55,8 @@ public class ForecastServlet extends HttpServlet {
     }
 
     private void updateForecast() throws IOException {
-        int maxTemp = Integer.valueOf(System.getenv("AL_MAX_TEMP_FAHRENHEIT")) * TEMP_MULTIPLY;
-        int minTemp = Integer.valueOf(System.getenv("AL_MIN_TEMP_FAHRENHEIT")) * TEMP_MULTIPLY;
+        int maxTemp = Integer.valueOf(System.getenv("AL_MAX_TEMP")) * TEMP_MULTIPLY;
+        int minTemp = Integer.valueOf(System.getenv("AL_MIN_TEMP")) * TEMP_MULTIPLY;
 
         BufferedReader reader = null;
         try {
@@ -80,8 +80,8 @@ public class ForecastServlet extends HttpServlet {
                     } else if (temperature < minTemp) {
                         temperature = minTemp;
                     } else {
-                        float tempCoeff = (float) 100 / (maxTemp - minTemp);
-                        temperature = (int) (tempCoeff * TEMP_MULTIPLY);
+                        float tempFloat = (float) 100 / (maxTemp - minTemp) * temperature;
+                        temperature = (int) (tempFloat * TEMP_MULTIPLY);
                     }
 
                     int wind = safeIntFromJson(hour, "windSpeed", WIND_MULTIPLY);
