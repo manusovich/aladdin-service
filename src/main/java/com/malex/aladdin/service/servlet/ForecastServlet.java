@@ -80,7 +80,7 @@ public class ForecastServlet extends HttpServlet {
                     } else if (temperature < minTemp) {
                         temperature = minTemp;
                     } else {
-                        float tempFloat = (float) 100 / (maxTemp - minTemp) * temperature;
+                        float tempFloat = (float) 100 / (maxTemp - minTemp) * (temperature - minTemp);
                         temperature = (int) (tempFloat * TEMP_MULTIPLY);
                     }
 
