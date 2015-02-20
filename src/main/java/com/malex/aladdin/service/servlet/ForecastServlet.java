@@ -22,8 +22,8 @@ import java.nio.ByteBuffer;
 public class ForecastServlet extends HttpServlet {
     private static final String API_KEY = System.getenv("AL_API_KEY");
     private static final int REQUEST_PERIOD = 5 * 60 * 1000;
-    private static final int START_HOUR = 1;
-    private static final int END_HOUR = 15;
+    private static final int START_HOUR = 0;
+    private static final int END_HOUR = 14;
     private static final int DATA_SIZE = 3 * 4 * (END_HOUR - START_HOUR);
     private static final int TEMP_MULTIPLY = 100;
     private static final int WIND_MULTIPLY = 100;
